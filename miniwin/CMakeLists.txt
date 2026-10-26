@@ -29,6 +29,7 @@ target_compile_definitions(miniwin PRIVATE
 
 option(ISLE_RENDERER_SOFTWARE "Build the software (SDL_Renderer) backend" ON)
 option(ISLE_RENDERER_SDLGPU "Build the SDL GPU backend" ON)
+option(ISLE_RENDERER_DIRECTX9 "Build the Direct3D 9 backend (Windows)" ON)
 if(ISLE_RENDERER_SOFTWARE)
   list(APPEND GRAPHICS_BACKENDS USE_SOFTWARE_RENDER)
 endif()
@@ -135,7 +136,7 @@ if(NINTENDO_3DS)
   endif()
 endif()
 
-if(WIN32 AND NOT WINDOWS_STORE)
+if(WIN32 AND NOT WINDOWS_STORE AND ISLE_RENDERER_DIRECTX9)
   target_sources(miniwin PRIVATE
     src/d3drm/backends/directx9/actual.cpp
     src/d3drm/backends/directx9/renderer.cpp

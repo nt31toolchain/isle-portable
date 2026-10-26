@@ -303,7 +303,9 @@ else()
     target_link_libraries(Isle::iniparser INTERFACE iniparser-static)
   endif()
 
-  find_package(libweaver REQUIRED)
+  if(ISLE_EXTENSIONS OR ISLE_BUILD_ASSETS)
+    find_package(libweaver REQUIRED)
+  endif()
 endif()
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -365,6 +367,10 @@ add_library(lego1)
 target_include_directories(lego1 PRIVATE "${CMAKE_SOURCE_DIR}/LEGO1")
 target_precompile_headers(lego1 PRIVATE "<lego1_pch.h>")
 set_property(TARGET lego1 PROPERTY DEFINE_SYMBOL "LEGO1_DLL")
+get_target_property(lego1_type lego1 TYPE)
+if(lego1_type STREQUAL "STATIC_LIBRARY")
+  target_compile_definitions(lego1 PUBLIC LEGO1_STATIC)
+endif()
 target_include_directories(lego1 PUBLIC "$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/util>")
 target_include_directories(lego1 PUBLIC "$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/extensions/include>")
 target_include_directories(lego1 PUBLIC "$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/LEGO1>")
@@ -414,7 +420,7 @@ target_sources(lego1 PRIVATE
   LEGO1/mxdirectx/legodxinfo.cpp
 )
 target_include_directories(lego1 PRIVATE "${CMAKE_SOURCE_DIR}/LEGO1")
-if (WIN32)
+if (WIN32 AND NOT ISLE_MINIWIN)
   target_link_libraries(lego1 PRIVATE ddraw)
 endif()
 
@@ -746,8 +752,9 @@ if (ISLE_BUILD_APP)
     target_sources(isle PRIVATE ISLE/res/isle.exe.manifest)
   endif()
   if (WIN32)
+    # No command when the program has no DLLs to copy (a static build).
     add_custom_command(TARGET isle POST_BUILD
-      COMMAND "${CMAKE_COMMAND}" -E copy $<TARGET_RUNTIME_DLLS:isle> "$<TARGET_FILE_DIR:isle>"
+      COMMAND "$<$<BOOL:$<TARGET_RUNTIME_DLLS:isle>>:${CMAKE_COMMAND};-E;copy;$<TARGET_RUNTIME_DLLS:isle>;$<TARGET_FILE_DIR:isle>>"
       COMMAND_EXPAND_LISTS
     )
   endif()
